@@ -1,0 +1,15 @@
+<textarea id="review" placeholder="Paste a review..."></textarea>
+<button onclick="check()">Analyze</button>
+<div id="result"></div>
+<script>
+async function check() {
+  const text = document.getElementById('review').value;
+  const res = await fetch('/api/analyze', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ text })
+  });
+  const data = await res.json();
+  document.getElementById('result').innerText =
+    `${data.sentiment.toUpperCase()} — keywords: ${data.keyPhrases.join(', ')}`;
+}
+</script>
