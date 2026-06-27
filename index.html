@@ -1,15 +1,65 @@
-<textarea id="review" placeholder="Paste a review..."></textarea>
-<button onclick="check()">Analyze</button>
-<div id="result"></div>
-<script>
-async function check() {
-  const text = document.getElementById('review').value;
-  const res = await fetch('/api/analyze', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ text })
-  });
-  const data = await res.json();
-  document.getElementById('result').innerText =
-    `${data.sentiment.toUpperCase()} — keywords: ${data.keyPhrases.join(', ')}`;
-}
-</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Review Analyser</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
+    textarea { width: 100%; height: 120px; font-size: 15px; padding: 10px; box-sizing: border-box; }
+    button { margin-top: 10px; padding: 10px 24px; font-size: 15px; cursor: pointer; background: #0078d4; color: white; border: none; border-radius: 6px; }
+    #result { margin-top: 24px; }
+    .badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 16px; }
+    .positive { background: #d4edda; color: #155724; }
+    .negative { background: #f8d7da; color: #721c24; }
+    .mixed    { background: #fff3cd; color: #856404; }
+    .neutral  { background: #e2e3e5; color: #383d41; }
+    .keywords { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { background: #e9ecef; padding: 4px 12px; border-radius: 12px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h2>Review Analyser</h2>
+  <textarea id="review" placeholder="Paste a product review here..."></textarea>
+  <br>
+  <button onclick="analyze()">Analyze</button>
+  <p id="status"></p>
+  <div id="result"></div>
+
+  <script>
+    async function analyze() {
+      const text = document.getElementById("review").value.trim();
+      if (!text) return;
+
+      document.getElementById("status").innerText = "Analyzing...";
+      document.getElementById("result").innerHTML = "";
+
+      try {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          document.getElementById("status").innerText = "Error: " + data.error;
+          return;
+        }
+
+        const chips = data.keyPhrases
+          .map(k => `<span class="chip">${k}</span>`)
+          .join("");
+
+        document.getElementById("status").innerText = "";
+        document.getElementById("result").innerHTML = `
+          <span class="badge ${data.sentiment}">${data.sentiment.toUpperCase()}</span>
+          <div class="keywords">${chips || "<span class='chip'>No keywords found</span>"}</div>
+        `;
+      } catch (e) {
+        document.getElementById("status").innerText = "Error: " + e.message;
+      }
+    }
+  </script>
+</body>
+</html>
